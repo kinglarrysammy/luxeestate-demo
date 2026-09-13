@@ -29,7 +29,7 @@ function App() {
   }, [search, typeFilter, minBeds, maxPrice]);
 
   return (
-    <div className="app">
+    <div className="app" dir={lang === "ar" ? "rtl" : "ltr"}>
       <header className="header">
         <div className="container header-inner">
           <div className="logo">
@@ -46,8 +46,8 @@ function App() {
               <Globe size={16} />
               <select value={lang} onChange={(e) => setLang(e.target.value as Lang)} aria-label="Language">
                 <option value="en">EN</option>
-                <option value="es">ES</option>
                 <option value="fr">FR</option>
+                <option value="ar">AR</option>
               </select>
             </div>
             <button className="btn-primary">{t.listProperty}</button>
