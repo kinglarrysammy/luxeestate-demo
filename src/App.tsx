@@ -1,10 +1,14 @@
 import { useState, useMemo } from 'react';
-import { Search, MapPin, Bed, Bath, Maximize, X, Home, Filter } from 'lucide-react';
+import { Search, MapPin, Bed, Bath, Maximize, X, Home, Filter, Globe } from 'lucide-react';
 import { properties, formatPrice, Property } from './data';
+import { translations, Lang } from './i18n';
 import Chatbot from './Chatbot';
 import './App.css';
 
 function App() {
+  const [lang, setLang] = useState<Lang>('en');
+  const t = translations[lang];
+
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
   const [minBeds, setMinBeds] = useState(0);
@@ -33,55 +37,54 @@ function App() {
             <span>LuxeEstate</span>
           </div>
           <nav className="nav">
-            <a href="#listings">Listings</a>
-            <a href="#about">About</a>
-            <a href="#contact">Contact</a>
+            <a href="#listings">{t.listings}</a>
+            <a href="#about">{t.about}</a>
+            <a href="#contact">{t.contact}</a>
           </nav>
-          <button className="btn-primary">List Your Property</button>
+          <div className="header-actions">
+            <div className="lang-switcher">
+              <Globe size={16} />
+              <select value={lang} onChange={(e) => setLang(e.target.value as Lang)} aria-label="Language">
+                <option value="en">EN</option>
+                <option value="es">ES</option>
+                <option value="fr">FR</option>
+              </select>
+            </div>
+            <button className="btn-primary">{t.listProperty}</button>
+          </div>
         </div>
       </header>
 
       <section className="hero">
         <div className="hero-overlay" />
         <div className="container hero-content">
-          <h1>Find Your Dream Home</h1>
-          <p>Discover exclusive properties in the most desirable locations</p>
-          
+          <h1>{t.heroTitle}</h1>
+          <p>{t.heroSubtitle}</p>
           <div className="search-bar">
             <div className="search-input-wrap">
               <Search size={20} />
-              <input
-                type="text"
-                placeholder="Search by city, neighborhood or keyword..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+              <input type="text" placeholder={t.searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <button 
-              className="filter-toggle"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter size={18} />
-              Filters
+            <button className="filter-toggle" onClick={() => setShowFilters(!showFilters)}>
+              <Filter size={18} /> {t.filters}
             </button>
           </div>
-
           {showFilters && (
             <div className="filters">
               <div className="filter-group">
-                <label>Property Type</label>
+                <label>{t.propertyType}</label>
                 <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-                  <option>All</option>
-                  <option>House</option>
-                  <option>Apartment</option>
-                  <option>Villa</option>
-                  <option>Condo</option>
+                  <option value="All">{t.any}</option>
+                  <option value="House">House</option>
+                  <option value="Apartment">Apartment</option>
+                  <option value="Villa">Villa</option>
+                  <option value="Condo">Condo</option>
                 </select>
               </div>
               <div className="filter-group">
-                <label>Min Beds</label>
+                <label>{t.minBeds}</label>
                 <select value={minBeds} onChange={(e) => setMinBeds(Number(e.target.value))}>
-                  <option value={0}>Any</option>
+                  <option value={0}>{t.any}</option>
                   <option value={1}>1+</option>
                   <option value={2}>2+</option>
                   <option value={3}>3+</option>
@@ -89,9 +92,9 @@ function App() {
                 </select>
               </div>
               <div className="filter-group">
-                <label>Max Price</label>
+                <label>{t.maxPrice}</label>
                 <select value={maxPrice} onChange={(e) => setMaxPrice(Number(e.target.value))}>
-                  <option value={5000000}>Any</option>
+                  <option value={5000000}>{t.any}</option>
                   <option value={750000}>$750k</option>
                   <option value={1000000}>$1M</option>
                   <option value={1500000}>$1.5M</option>
@@ -106,118 +109,84 @@ function App() {
       <section className="listings" id="listings">
         <div className="container">
           <div className="section-header">
-            <h2>Featured Properties</h2>
-            <p>{filtered.length} properties available</p>
+            <h2>{t.featuredProperties}</h2>
+            <p>{filtered.length} {t.propertiesAvailable}</p>
           </div>
-
           <div className="grid">
             {filtered.map((property) => (
-              <article 
-                key={property.id} 
-                className="card"
-                onClick={() => setSelected(property)}
-              >
+              <article key={property.id} className="card" onClick={() => setSelected(property)}>
                 <div className="card-image">
                   <img src={property.image} alt={property.title} loading="lazy" />
-                  {property.featured && <span className="badge">Featured</span>}
+                  {property.featured && <span className="badge">{t.featured}</span>}
                   <span className="type-badge">{property.type}</span>
                 </div>
                 <div className="card-body">
                   <div className="price">{formatPrice(property.price)}</div>
                   <h3>{property.title}</h3>
-                  <div className="location">
-                    <MapPin size={14} />
-                    {property.location}
-                  </div>
+                  <div className="location"><MapPin size={14} /> {property.location}</div>
                   <div className="specs">
-                    <span><Bed size={16} /> {property.beds} beds</span>
-                    <span><Bath size={16} /> {property.baths} baths</span>
+                    <span><Bed size={16} /> {property.beds} {t.beds}</span>
+                    <span><Bath size={16} /> {property.baths} {t.baths}</span>
                     <span><Maximize size={16} /> {property.sqft.toLocaleString()} sqft</span>
                   </div>
                 </div>
               </article>
             ))}
           </div>
-
-          {filtered.length === 0 && (
-            <div className="empty">
-              <p>No properties match your filters. Try adjusting your search.</p>
-            </div>
-          )}
+          {filtered.length === 0 && <div className="empty"><p>{t.noResults}</p></div>}
         </div>
       </section>
 
       <section className="about" id="about">
         <div className="container about-inner">
           <div>
-            <h2>Why Choose LuxeEstate?</h2>
-            <p>
-              We specialize in high-end residential properties across the most sought-after markets. 
-              Our curated selection ensures every listing meets the highest standards of quality, 
-              design, and location.
-            </p>
+            <h2>{t.whyChoose}</h2>
+            <p>{t.aboutText}</p>
             <ul>
-              <li>Exclusive off-market opportunities</li>
-              <li>Expert local market knowledge</li>
-              <li>White-glove client experience</li>
-              <li>Verified luxury listings only</li>
+              <li>{t.benefit1}</li>
+              <li>{t.benefit2}</li>
+              <li>{t.benefit3}</li>
+              <li>{t.benefit4}</li>
             </ul>
           </div>
           <div className="stats">
-            <div className="stat">
-              <strong>$2.4B+</strong>
-              <span>Properties Sold</span>
-            </div>
-            <div className="stat">
-              <strong>1,200+</strong>
-              <span>Happy Clients</span>
-            </div>
-            <div className="stat">
-              <strong>18</strong>
-              <span>Cities Covered</span>
-            </div>
+            <div className="stat"><strong>$2.4B+</strong><span>{t.propertiesSold}</span></div>
+            <div className="stat"><strong>1,200+</strong><span>{t.happyClients}</span></div>
+            <div className="stat"><strong>18</strong><span>{t.citiesCovered}</span></div>
           </div>
         </div>
       </section>
 
       <footer className="footer" id="contact">
         <div className="container footer-inner">
-          <div className="logo">
-            <Home size={24} />
-            <span>LuxeEstate</span>
-          </div>
+          <div className="logo"><Home size={24} /><span>LuxeEstate</span></div>
           <p>© 2026 LuxeEstate. Premium Real Estate Demo.</p>
-          <p className="muted">This is a demonstration application built with Vite + React.</p>
+          <p className="muted">{t.footerNote}</p>
         </div>
       </footer>
 
       {selected && (
         <div className="modal-overlay" onClick={() => setSelected(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSelected(null)}>
-              <X size={24} />
-            </button>
+            <button className="modal-close" onClick={() => setSelected(null)}><X size={24} /></button>
             <img src={selected.image} alt={selected.title} className="modal-image" />
             <div className="modal-body">
               <div className="modal-price">{formatPrice(selected.price)}</div>
               <h2>{selected.title}</h2>
-              <div className="location">
-                <MapPin size={16} />
-                {selected.location}
-              </div>
+              <div className="location"><MapPin size={16} /> {selected.location}</div>
               <div className="specs large">
-                <span><Bed size={18} /> {selected.beds} bedrooms</span>
-                <span><Bath size={18} /> {selected.baths} bathrooms</span>
+                <span><Bed size={18} /> {selected.beds} {t.bedrooms}</span>
+                <span><Bath size={18} /> {selected.baths} {t.bathrooms}</span>
                 <span><Maximize size={18} /> {selected.sqft.toLocaleString()} sqft</span>
               </div>
               <p className="description">{selected.description}</p>
-              <button className="btn-primary full">Schedule a Viewing</button>
+              <button className="btn-primary full">{t.scheduleViewing}</button>
             </div>
           </div>
         </div>
       )}
 
-      <Chatbot />
+      <Chatbot lang={lang} />
     </div>
   );
 }
