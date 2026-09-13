@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
 import { properties, formatPrice } from './data';
+import { translations, Lang } from './i18n';
 
 interface Message {
   id: number;
@@ -8,22 +9,20 @@ interface Message {
   text: string;
 }
 
-const QUICK_REPLIES = [
-  'Show me waterfront homes',
-  'What is the price range?',
-  'Schedule a viewing',
-  'Homes under $1M',
-  'Tell me about Aspen properties',
-];
+interface ChatbotProps {
+  lang: Lang;
+}
 
-function getBotReply(input: string): string {
+function getBotReply(input: string, lang: Lang): string {
   const q = input.toLowerCase();
+  const t = translations[lang];
 
-  if (q.includes('hello') || q.includes('hi') || q.includes('hey')) {
-    return "Hello! I'm the LuxeEstate assistant. I can help you find properties, check prices, or schedule a viewing. What are you looking for?";
+  if (q.includes('hello') || q.includes('hi') || q.includes('hey') || q.includes('bonjour') || q.includes('مرحبا') || q.includes('salam')) {
+    return t.chatWelcome;
   }
 
-  if (q.includes('waterfront') || q.includes('ocean') || q.includes('beach') || q.includes('lake')) {
+  if (q.includes('waterfront') || q.includes('ocean') || q.includes('beach') || q.includes('lake') ||
+      q.includes('mer') || q.includes('plage') || q.includes('واجهة') || q.includes('بحر')) {
     const matches = properties.filter(p =>
       p.title.toLowerCase().includes('water') ||
       p.title.toLowerCase().includes('beach') ||
@@ -33,74 +32,61 @@ function getBotReply(input: string): string {
       p.location.toLowerCase().includes('tahoe')
     );
     if (matches.length) {
-      return `We have ${matches.length} waterfront / coastal properties:\n\n` +
-        matches.map(p => `• ${p.title} – ${formatPrice(p.price)} (${p.location})`).join('\n') +
-        `\n\nWould you like more details on any of these?`;
+      const header = lang === 'fr'
+        ? `Nous avons ${matches.length} propriétés en bord de mer :\n\n`
+        : lang === 'ar'
+        ? `لدينا ${matches.length} عقارات على الواجهة البحرية:\n\n`
+        : `We have ${matches.length} waterfront / coastal properties:\n\n`;
+      return header + matches.map(p => `• ${p.title} – ${formatPrice(p.price)} (${p.location})`).join('\n');
     }
   }
 
-  if (q.includes('aspen') || q.includes('mountain') || q.includes('ski')) {
+  if (q.includes('aspen') || q.includes('mountain') || q.includes('ski') || q.includes('montagne') || q.includes('أسبن')) {
     const p = properties.find(x => x.location.includes('Aspen'));
-    if (p) {
-      return `We have a stunning Mountain Retreat Estate in Aspen:\n\n${p.title}\n${formatPrice(p.price)} • ${p.beds} beds • ${p.baths} baths • ${p.sqft.toLocaleString()} sqft\n\n${p.description}\n\nWould you like to schedule a private viewing?`;
-    }
-  }
-
-  if (q.includes('under') && (q.includes('1m') || q.includes('1 m') || q.includes('million') || q.includes('1000000'))) {
-    const matches = properties.filter(p => p.price < 1000000);
-    return `Properties under $1M:\n\n` +
-      matches.map(p => `• ${p.title} – ${formatPrice(p.price)} (${p.location})`).join('\n') +
-      `\n\nI can send you full details or arrange a tour.`;
-  }
-
-  if (q.includes('price') || q.includes('range') || q.includes('cost') || q.includes('budget')) {
-    const prices = properties.map(p => p.price);
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    return `Our current listings range from ${formatPrice(min)} to ${formatPrice(max)}. Most of our featured homes sit between $900k and $2.5M. What's your budget range?`;
-  }
-
-  if (q.includes('viewing') || q.includes('tour') || q.includes('visit') || q.includes('schedule') || q.includes('appointment')) {
-    return "I'd be happy to arrange a private viewing. Please share:\n\n1. Which property interests you (or the location)\n2. Your preferred dates\n3. Your name and best contact number/email\n\nA specialist will confirm within a few hours.";
-  }
-
-  if (q.includes('malibu') || q.includes('villa')) {
-    const p = properties.find(x => x.id === 1);
-    if (p) {
-      return `${p.title} in ${p.location}\n${formatPrice(p.price)} • ${p.beds} beds • ${p.baths} baths\n\n${p.description}\n\nThis is one of our most requested properties. Shall I reserve a viewing slot?`;
-    }
-  }
-
-  if (q.includes('manhattan') || q.includes('penthouse') || q.includes('new york') || q.includes('nyc')) {
-    const p = properties.find(x => x.id === 2);
     if (p) {
       return `${p.title}\n${formatPrice(p.price)} • ${p.beds} beds • ${p.baths} baths\n\n${p.description}`;
     }
   }
 
-  if (q.includes('contact') || q.includes('agent') || q.includes('speak') || q.includes('call')) {
-    return "You can reach our team at:\n\n📧 concierge@luxeestate.demo\n📞 (555) 014-2800\n\nOr just continue chatting here and I'll connect you with the right specialist.";
+  if ((q.includes('under') || q.includes('moins') || q.includes('أقل')) &&
+      (q.includes('1m') || q.includes('1 m') || q.includes('million') || q.includes('مليون'))) {
+    const matches = properties.filter(p => p.price < 1000000);
+    const header = lang === 'fr' ? `Propriétés de moins de 1 M$ :\n\n` : lang === 'ar' ? `عقارات بأقل من مليون دولار:\n\n` : `Properties under $1M:\n\n`;
+    return header + matches.map(p => `• ${p.title} – ${formatPrice(p.price)} (${p.location})`).join('\n');
   }
 
-  if (q.includes('thank')) {
-    return "You're very welcome! I'm here whenever you need anything else. Looking forward to helping you find the perfect home.";
+  if (q.includes('price') || q.includes('range') || q.includes('budget') || q.includes('prix') || q.includes('سعر')) {
+    const prices = properties.map(p => p.price);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    if (lang === 'fr') return `Nos annonces vont de ${formatPrice(min)} à ${formatPrice(max)}. Quel est votre budget ?`;
+    if (lang === 'ar') return `عقاراتنا تتراوح من ${formatPrice(min)} إلى ${formatPrice(max)}. ما هو ميزانيتك؟`;
+    return `Our current listings range from ${formatPrice(min)} to ${formatPrice(max)}. What’s your budget range?`;
   }
 
-  return "Thanks for your message. I can help with:\n• Property recommendations\n• Pricing & availability\n• Scheduling viewings\n• Specific locations (Malibu, Aspen, Miami, Manhattan…)\n\nJust tell me what you're looking for!";
+  if (q.includes('viewing') || q.includes('tour') || q.includes('schedule') || q.includes('visite') || q.includes('معاينة') || q.includes('حجز')) {
+    if (lang === 'fr') return "Je serai ravi d’organiser une visite privée. Merci de partager :\n\n1. Quelle propriété vous intéresse\n2. Vos dates préférées\n3. Votre nom et contact";
+    if (lang === 'ar') return "يسعدني ترتيب معاينة خاصة. يرجى مشاركة:\n\n1. العقار الذي يهمك\n2. التواريخ المفضلة\n3. اسمك ورقم التواصل";
+    return "I'd be happy to arrange a private viewing. Please share:\n\n1. Which property interests you\n2. Your preferred dates\n3. Your name and best contact";
+  }
+
+  return t.chatWelcome;
 }
 
-export default function Chatbot() {
+export default function Chatbot({ lang }: ChatbotProps) {
+  const t = translations[lang];
+
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      role: 'bot',
-      text: "Hi! I'm your LuxeEstate assistant 🏠\n\nI can help you explore properties, check prices, or schedule a private viewing. What are you looking for today?",
-    },
+    { id: 1, role: 'bot', text: t.chatWelcome },
   ]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMessages([{ id: 1, role: 'bot', text: t.chatWelcome }]);
+  }, [lang]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -108,18 +94,19 @@ export default function Chatbot() {
 
   const send = (text: string) => {
     if (!text.trim()) return;
-
     const userMsg: Message = { id: Date.now(), role: 'user', text: text.trim() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setTyping(true);
 
     setTimeout(() => {
-      const reply = getBotReply(text);
+      const reply = getBotReply(text, lang);
       setMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: reply }]);
       setTyping(false);
     }, 700 + Math.random() * 600);
   };
+
+  const quickReplies = [t.quick1, t.quick2, t.quick3, t.quick4, t.quick5];
 
   return (
     <>
@@ -140,8 +127,8 @@ export default function Chatbot() {
                 <Bot size={20} />
               </div>
               <div>
-                <strong>LuxeEstate Assistant</strong>
-                <span className="chat-status">Online • Usually replies instantly</span>
+                <strong>{t.chatTitle}</strong>
+                <span className="chat-status">{t.chatStatus}</span>
               </div>
             </div>
             <button className="chat-close" onClick={() => setOpen(false)}>
@@ -171,7 +158,7 @@ export default function Chatbot() {
 
           {messages.length < 4 && (
             <div className="chat-quick">
-              {QUICK_REPLIES.map(q => (
+              {quickReplies.map(q => (
                 <button key={q} onClick={() => send(q)}>{q}</button>
               ))}
             </div>
@@ -187,7 +174,7 @@ export default function Chatbot() {
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Ask about properties, prices, viewings..."
+              placeholder={t.chatPlaceholder}
               autoFocus
             />
             <button type="submit" disabled={!input.trim()}>
